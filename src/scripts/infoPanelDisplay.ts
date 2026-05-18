@@ -30,14 +30,14 @@ export class InfoPanelDisplay {
     bgMat.specularColor = Color3.Black();
 
     const bg = MeshBuilder.CreateBox("infoPanelBgBox", { width: 0.85, height: 1.5, depth: 0.03 }, scene);
-    bg.position = new Vector3(3.2, 2, 0);
-    bg.billboardMode = Mesh.BILLBOARDMODE_Y;
+    bg.position = new Vector3(9.95, 2, 0);
+    bg.rotation.y = -Math.PI / 2;
     bg.material = bgMat;
 
     // Display plane
     this.panelMesh = MeshBuilder.CreatePlane("infoPanelPlane", { width: 0.8, height: 1.4 }, scene);
-    this.panelMesh.position = new Vector3(3.2, 2, -0.02);
-    this.panelMesh.billboardMode = Mesh.BILLBOARDMODE_ALL;
+    this.panelMesh.position = new Vector3(9.93, 2, 0);
+    this.panelMesh.rotation.y = -Math.PI / 2;
 
     this.texture = new DynamicTexture("infoPanelDT", { width: TEX_W, height: TEX_H }, scene, false);
     this.texture.hasAlpha = true;

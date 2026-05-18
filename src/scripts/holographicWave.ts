@@ -61,6 +61,8 @@ export class HolographicWaveRenderer {
     this.disposeArray(this.waveMeshes);
     this.disposeArray(this.stemMeshes);
 
+    if (!state.cableConnected) return;
+
     if (state.discrete) {
       this.renderDiscrete(state);
     } else {
@@ -116,7 +118,7 @@ export class HolographicWaveRenderer {
     const step = this.adaptiveSamples ? 0.08 : SAMPLE_STEP;
     const points: Vector3[] = [];
     const colors: Color4[] = [];
-    const overlayColor = new Color4(1, 0.42, 0.42, 0.8); // #ff6b6b
+    const overlayColor = new Color4(0.1, 0.4, 0.9, 0.8); // Blue
 
     for (let t = T_MIN; t <= T_MAX; t += step) {
       const v = computeSignal(overlayType, t, overlayParams);
@@ -141,7 +143,7 @@ export class HolographicWaveRenderer {
     const step = this.adaptiveSamples ? 0.08 : SAMPLE_STEP;
     const points: Vector3[] = [];
     const colors: Color4[] = [];
-    const waveColor = new Color4(0, 0.83, 1, 1); // #00d4ff
+    const waveColor = new Color4(0.88, 0.12, 0.12, 1); // #e02020 (Red)
 
     for (let t = T_MIN; t <= T_MAX; t += step) {
       const v = computeSignal(state.type, t, state.params);
@@ -160,7 +162,7 @@ export class HolographicWaveRenderer {
       this.waveMeshes.push(waveLine);
 
       // Glow pass (wider, lower alpha)
-      const glowColors = points.map(() => new Color4(0, 0.83, 1, 0.3));
+      const glowColors = points.map(() => new Color4(0.88, 0.12, 0.12, 0.3));
       const glowLine = MeshBuilder.CreateLines("holoWaveGlow", {
         points,
         colors: glowColors,
@@ -172,13 +174,13 @@ export class HolographicWaveRenderer {
 
   private renderDiscrete(state: SignalState): void {
     const stemMat = new StandardMaterial("stemMat", this.scene);
-    stemMat.diffuseColor = new Color3(0, 0.83, 1);
-    stemMat.emissiveColor = new Color3(0, 0.4, 0.5);
+    stemMat.diffuseColor = new Color3(0.88, 0.12, 0.12);
+    stemMat.emissiveColor = new Color3(0.6, 0.1, 0.1);
     stemMat.specularColor = Color3.Black();
 
     const tipMat = new StandardMaterial("tipMat", this.scene);
-    tipMat.diffuseColor = new Color3(0, 0.95, 1);
-    tipMat.emissiveColor = new Color3(0, 0.6, 0.7);
+    tipMat.diffuseColor = new Color3(1.0, 0.2, 0.2);
+    tipMat.emissiveColor = new Color3(0.8, 0.1, 0.1);
 
     const Ts = state.Ts;
     const nStart = Math.ceil(T_MIN / Ts);
@@ -240,7 +242,7 @@ export class HolographicWaveRenderer {
       const ctx = dt.getContext() as unknown as CanvasRenderingContext2D;
       ctx.clearRect(0, 0, 64, 32);
       ctx.font = "bold 18px monospace";
-      ctx.fillStyle = t === 0 ? "#00e5c8" : "#606080";
+      ctx.fillStyle = t === 0 ? "#cc0000" : "#333333";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(`t=${t}`, 32, 16);
@@ -248,7 +250,7 @@ export class HolographicWaveRenderer {
 
       const mat = new StandardMaterial(`tickLblMat_${t}`, this.scene);
       mat.diffuseTexture = dt;
-      mat.emissiveColor = new Color3(0.3, 0.3, 0.35);
+      mat.emissiveColor = new Color3(0.1, 0.1, 0.1);
       mat.specularColor = Color3.Black();
       mat.backFaceCulling = false;
       mat.useAlphaFromDiffuseTexture = true;
@@ -261,8 +263,8 @@ export class HolographicWaveRenderer {
 
   private buildOriginMarker(): void {
     const mat = new StandardMaterial("originMat", this.scene);
-    mat.diffuseColor = new Color3(0, 0.898, 0.784);
-    mat.emissiveColor = new Color3(0, 0.45, 0.4);
+    mat.diffuseColor = new Color3(0.8, 0.1, 0.1);
+    mat.emissiveColor = new Color3(0.5, 0.1, 0.1);
     mat.specularColor = Color3.Black();
     mat.alpha = 0.6;
 

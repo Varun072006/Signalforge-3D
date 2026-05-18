@@ -246,7 +246,7 @@ export function buildEquipment(scene: Scene): EquipmentRefs {
   displayMat.specularColor = Color3.Black();
 
   const wallDisplay = MeshBuilder.CreatePlane("wallDisplay", { width: 2, height: 1.2 }, scene);
-  wallDisplay.position = new Vector3(0, 2.5, 4.98);
+  wallDisplay.position = new Vector3(0, 1.9, 7.95);
   wallDisplay.material = displayMat;
 
   // Display border frame
@@ -255,10 +255,10 @@ export function buildEquipment(scene: Scene): EquipmentRefs {
   frameMat.emissiveColor = new Color3(0, 0.15, 0.13);
 
   const frameTop = MeshBuilder.CreateBox("frameTop", { width: 2.1, height: 0.03, depth: 0.03 }, scene);
-  frameTop.position = new Vector3(0, 3.11, 4.97);
+  frameTop.position = new Vector3(0, 2.51, 7.94);
   frameTop.material = frameMat;
   const frameBot = MeshBuilder.CreateBox("frameBot", { width: 2.1, height: 0.03, depth: 0.03 }, scene);
-  frameBot.position = new Vector3(0, 1.89, 4.97);
+  frameBot.position = new Vector3(0, 1.29, 7.94);
   frameBot.material = frameMat;
 
   // ══════════════════════════════════════
@@ -270,7 +270,7 @@ export function buildEquipment(scene: Scene): EquipmentRefs {
   cbMat.specularColor = Color3.Black();
 
   const challengeBoard = MeshBuilder.CreatePlane("challengeBoard", { width: 1.5, height: 1 }, scene);
-  challengeBoard.position = new Vector3(-4.98, 2, 0);
+  challengeBoard.position = new Vector3(-9.95, 3, 0);
   challengeBoard.rotation.y = Math.PI / 2;
   challengeBoard.material = cbMat;
 
@@ -279,10 +279,10 @@ export function buildEquipment(scene: Scene): EquipmentRefs {
   cbBorderMat.diffuseColor = new Color3(0.1, 0.05, 0.15);
   cbBorderMat.emissiveColor = new Color3(0.13, 0.11, 0.196); // ~20% of #a78bfa
   const cbBorderTop = MeshBuilder.CreateBox("cbBorderTop", { width: 0.02, height: 1.04, depth: 0.02 }, scene);
-  cbBorderTop.position = new Vector3(-4.97, 2, -0.76);
+  cbBorderTop.position = new Vector3(-9.94, 3, -0.76);
   cbBorderTop.material = cbBorderMat;
   const cbBorderBot = MeshBuilder.CreateBox("cbBorderBot", { width: 0.02, height: 1.04, depth: 0.02 }, scene);
-  cbBorderBot.position = new Vector3(-4.97, 2, 0.76);
+  cbBorderBot.position = new Vector3(-9.94, 3, 0.76);
   cbBorderBot.material = cbBorderMat;
 
   return {

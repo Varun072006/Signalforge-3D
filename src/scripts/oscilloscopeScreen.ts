@@ -45,6 +45,11 @@ export class OscilloscopeDisplay {
     ctx.fillStyle = "#001a00";
     ctx.fillRect(0, 0, TEX_W, TEX_H);
 
+    if (!state.oscPower) {
+      this.texture.update();
+      return;
+    }
+
     // ── CRT scanline effect ──
     ctx.strokeStyle = "rgba(0, 40, 0, 0.3)";
     ctx.lineWidth = 1;
@@ -82,6 +87,7 @@ export class OscilloscopeDisplay {
       
       // Draw Product (solid blue/purple)
       const productFn = (t: number) => {
+        if (!state.cableConnected) return 0;
         const v1 = computeSignal(state.type, t, state.params);
         const v2 = computeSignal(state.signal2Type, t, state.signal2Params);
         return v1 * v2;
@@ -93,10 +99,11 @@ export class OscilloscopeDisplay {
       ctx.textAlign = "center";
       ctx.fillText("PRODUCT", TEX_W / 2, 32);
     } else {
-      this.drawTrace(ctx, state.type, state.params, "#00ff41", TEX_H * 0.35, TEX_H * 0.55);
+      const mainTraceType = state.cableConnected ? state.type : 'none';
+      this.drawTrace(ctx, mainTraceType, state.params, "#00ff41", TEX_H * 0.35, TEX_H * 0.55);
 
       // ── Overlay trace if active ──
-      if (overlayType) {
+      if (overlayType && state.cableConnected) {
         const overlayParams = { ...state.params, A: state.params.A * 0.7 };
         this.drawTrace(ctx, overlayType, overlayParams, "#ff6b6b", TEX_H * 0.35, TEX_H * 0.55);
       }
@@ -142,7 +149,10 @@ export class OscilloscopeDisplay {
     yRange: number,
     dashed: boolean = false
   ): void {
-    const fn = (t: number) => computeSignal(type, t, params);
+    const fn = (t: number) => {
+      if (type === 'none') return 0;
+      return computeSignal(type, t, params);
+    };
     this.drawCustomTrace(ctx, fn, color, yCenter, yRange, dashed, params.A);
   }
 

@@ -104,6 +104,7 @@ export default function Home() {
     // ═══════════════════════════════════════════════
     function updateAll(): void {
       const state = signalState.get();
+      equipment.bncCable.isVisible = state.cableConnected;
 
       // Re-render holographic wave
       waveRenderer.render(state);
@@ -126,7 +127,7 @@ export default function Home() {
     // ═══════════════════════════════════════════════
     // LAYER 5 — INTERACTION
     // ═══════════════════════════════════════════════
-    buildSignalHub(scene, updateAll);
+    // buildSignalHub(scene, updateAll);
     setupKnobInteraction(scene, equipment, updateAll);
 
     // ═══════════════════════════════════════════════
@@ -181,7 +182,7 @@ export default function Home() {
 
     // Start onboarding tour after a brief delay
     setTimeout(() => {
-      runOnboardingTour(scene);
+      runOnboardingTour(scene, equipment);
     }, 1500);
 
     // ═══════════════════════════════════════════════

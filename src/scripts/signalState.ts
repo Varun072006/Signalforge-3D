@@ -22,6 +22,8 @@ export interface SignalState {
   activeTask: string;
   signal2Type: string;
   signal2Params: SignalParams;
+  oscPower: boolean;
+  cableConnected: boolean;
 }
 
 export type SignalStateListener = (state: SignalState) => void;
@@ -37,6 +39,8 @@ class SignalStateManager {
     activeTask: 'Signal Plot',
     signal2Type: 'sine',
     signal2Params: { A: 1.0, f: 1.0, phi: 0, alpha: -0.5 },
+    oscPower: false,
+    cableConnected: false,
   };
 
   private listeners: SignalStateListener[] = [];
