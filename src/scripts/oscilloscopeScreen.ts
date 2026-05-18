@@ -73,30 +73,42 @@ export class OscilloscopeDisplay {
       ctx.stroke();
     }
 
-    // ── Signal name ──
-    ctx.font = "bold 28px monospace";
-    ctx.fillStyle = "#00ff41";
-    ctx.textAlign = "center";
-    ctx.fillText(getSignalDisplayName(state.type), TEX_W / 2, 32);
-
-    // ── Equation ──
-    ctx.font = "16px monospace";
-    ctx.fillStyle = "#00cc33";
-    ctx.fillText(getEquationString(state.type, state.params), TEX_W / 2, 58);
-
-    // ── Mode indicator ──
-    ctx.font = "14px monospace";
-    ctx.fillStyle = state.discrete ? "#00e676" : "#00aa44";
-    ctx.textAlign = "left";
-    ctx.fillText(state.discrete ? "MODE: DISCRETE" : "MODE: CONTINUOUS", 12, 78);
-
     // ── Mini waveform trace ──
-    this.drawTrace(ctx, state.type, state.params, "#00ff41", TEX_H * 0.35, TEX_H * 0.55);
+    if (state.activeTask === "Signal Product") {
+      // Draw Signal 1 (dashed)
+      this.drawTrace(ctx, state.type, state.params, "#ffaa00", TEX_H * 0.35, TEX_H * 0.55, true);
+      // Draw Signal 2 (dashed)
+      this.drawTrace(ctx, state.signal2Type, state.signal2Params, "#00aaff", TEX_H * 0.35, TEX_H * 0.55, true);
+      
+      // Draw Product (solid blue/purple)
+      const productFn = (t: number) => {
+        const v1 = computeSignal(state.type, t, state.params);
+        const v2 = computeSignal(state.signal2Type, t, state.signal2Params);
+        return v1 * v2;
+      };
+      this.drawCustomTrace(ctx, productFn, "#bb00ff", TEX_H * 0.35, TEX_H * 0.55);
+      
+      ctx.font = "bold 20px monospace";
+      ctx.fillStyle = "#bb00ff";
+      ctx.textAlign = "center";
+      ctx.fillText("PRODUCT", TEX_W / 2, 32);
+    } else {
+      this.drawTrace(ctx, state.type, state.params, "#00ff41", TEX_H * 0.35, TEX_H * 0.55);
 
-    // ── Overlay trace if active ──
-    if (overlayType) {
-      const overlayParams = { ...state.params, A: state.params.A * 0.7 };
-      this.drawTrace(ctx, overlayType, overlayParams, "#ff6b6b", TEX_H * 0.35, TEX_H * 0.55);
+      // ── Overlay trace if active ──
+      if (overlayType) {
+        const overlayParams = { ...state.params, A: state.params.A * 0.7 };
+        this.drawTrace(ctx, overlayType, overlayParams, "#ff6b6b", TEX_H * 0.35, TEX_H * 0.55);
+      }
+      
+      ctx.font = "bold 28px monospace";
+      ctx.fillStyle = "#00ff41";
+      ctx.textAlign = "center";
+      ctx.fillText(getSignalDisplayName(state.type), TEX_W / 2, 32);
+      
+      ctx.font = "16px monospace";
+      ctx.fillStyle = "#00cc33";
+      ctx.fillText(getEquationString(state.type, state.params), TEX_W / 2, 58);
     }
 
     // ── Amplitude axis labels ──
@@ -128,6 +140,20 @@ export class OscilloscopeDisplay {
     color: string,
     yCenter: number,
     yRange: number,
+    dashed: boolean = false
+  ): void {
+    const fn = (t: number) => computeSignal(type, t, params);
+    this.drawCustomTrace(ctx, fn, color, yCenter, yRange, dashed, params.A);
+  }
+
+  private drawCustomTrace(
+    ctx: CanvasRenderingContext2D,
+    fn: (t: number) => number,
+    color: string,
+    yCenter: number,
+    yRange: number,
+    dashed: boolean = false,
+    baseA: number = 1
   ): void {
     const numSamples = 80;
     const tMin = -1;
@@ -137,15 +163,22 @@ export class OscilloscopeDisplay {
     ctx.lineWidth = 2;
     ctx.shadowColor = color;
     ctx.shadowBlur = 4;
+    
+    if (dashed) {
+      ctx.setLineDash([5, 5]);
+    } else {
+      ctx.setLineDash([]);
+    }
+    
     ctx.beginPath();
 
     for (let i = 0; i <= numSamples; i++) {
       const t = tMin + (i / numSamples) * (tMax - tMin);
-      const v = computeSignal(type, t, params);
+      const v = fn(t);
       const clamped = Math.max(-2, Math.min(2, v));
 
       const px = (i / numSamples) * TEX_W;
-      const py = yCenter - (clamped / (params.A || 1)) * yRange * 0.35;
+      const py = yCenter - (clamped / (baseA || 1)) * yRange * 0.35;
 
       if (i === 0) {
         ctx.moveTo(px, py);
@@ -156,5 +189,6 @@ export class OscilloscopeDisplay {
 
     ctx.stroke();
     ctx.shadowBlur = 0;
+    ctx.setLineDash([]); // reset
   }
 }

@@ -11,12 +11,17 @@ export interface SignalParams {
 }
 
 export interface SignalState {
-  type: 'step' | 'impulse' | 'ramp' | 'sine' | 'exp';
+  type: string;
   params: SignalParams;
   discrete: boolean;
   Ts: number;
   challengeMode: boolean;
   overlayActive: boolean;
+  
+  // New properties for UI matching 2D lab
+  activeTask: string;
+  signal2Type: string;
+  signal2Params: SignalParams;
 }
 
 export type SignalStateListener = (state: SignalState) => void;
@@ -29,6 +34,9 @@ class SignalStateManager {
     Ts: 0.2,
     challengeMode: false,
     overlayActive: false,
+    activeTask: 'Signal Plot',
+    signal2Type: 'sine',
+    signal2Params: { A: 1.0, f: 1.0, phi: 0, alpha: -0.5 },
   };
 
   private listeners: SignalStateListener[] = [];

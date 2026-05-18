@@ -22,6 +22,11 @@ export interface EquipmentRefs {
   decayKnob: Mesh;
   tsKnob: Mesh;
   discreteToggle: Mesh;
+  // Function Generator 2
+  funcGen2Body: Mesh;
+  amp2Knob: Mesh;
+  freq2Knob: Mesh;
+  phase2Knob: Mesh;
   // Oscilloscope
   oscBody: Mesh;
   oscilloscopeScreen: Mesh;
@@ -38,9 +43,9 @@ export function buildEquipment(scene: Scene): EquipmentRefs {
   // 1. FUNCTION GENERATOR
   // ══════════════════════════════════════
   const fgMat = new StandardMaterial("fgMat", scene);
-  fgMat.diffuseColor = new Color3(0.118, 0.118, 0.227); // #1e1e3a
-  fgMat.specularColor = new Color3(0.15, 0.15, 0.2);
-  fgMat.specularPower = 32;
+  fgMat.diffuseColor = new Color3(0.85, 0.85, 0.85); // Light realistic gray
+  fgMat.specularColor = new Color3(0.2, 0.2, 0.2);
+  fgMat.specularPower = 64;
 
   const funcGenBody = MeshBuilder.CreateBox("funcGenBody", { width: 0.8, height: 0.5, depth: 0.6 }, scene);
   funcGenBody.position = new Vector3(-1.2, 1.1, 0);
@@ -49,19 +54,19 @@ export function buildEquipment(scene: Scene): EquipmentRefs {
   // FG Screen (small LCD display)
   const fgScreen = MeshBuilder.CreatePlane("funcGenScreen", { width: 0.35, height: 0.12 }, scene);
   fgScreen.position = new Vector3(-1.2, 1.25, -0.301);
-  fgScreen.material = createEmissiveMat(scene, "fgScreenMat", new Color3(0, 0.3, 0.35));
+  fgScreen.material = createEmissiveMat(scene, "fgScreenMat", new Color3(0.8, 0.9, 0.8)); // Light green LCD
 
-  // Rotary Knobs
-  const knobColor = new Color3(0, 0.898, 0.784); // #00e5c8
+  // Rotary Knobs (realistic dark gray/black)
+  const knobColor = new Color3(0.15, 0.15, 0.15);
   const ampKnob = createKnob(scene, "ampKnob", new Vector3(-1.4, 1.05, -0.301), knobColor);
   const freqKnob = createKnob(scene, "freqKnob", new Vector3(-1.2, 1.05, -0.301), knobColor);
   const phaseKnob = createKnob(scene, "phaseKnob", new Vector3(-1.0, 1.05, -0.301), knobColor);
 
   // Decay knob (below main knobs)
-  const decayKnob = createKnob(scene, "decayKnob", new Vector3(-1.3, 0.93, -0.301), new Color3(0.655, 0.545, 0.98)); // purple
-  const tsKnob = createKnob(scene, "tsKnob", new Vector3(-1.1, 0.93, -0.301), new Color3(1, 0.84, 0));
+  const decayKnob = createKnob(scene, "decayKnob", new Vector3(-1.3, 0.93, -0.301), knobColor);
+  const tsKnob = createKnob(scene, "tsKnob", new Vector3(-1.1, 0.93, -0.301), knobColor);
 
-  // Knob labels
+  // Knob labels (dark text for light body)
   createSmallLabel(scene, "AMP", new Vector3(-1.4, 1.13, -0.31));
   createSmallLabel(scene, "FREQ", new Vector3(-1.2, 1.13, -0.31));
   createSmallLabel(scene, "PHASE", new Vector3(-1.0, 1.13, -0.31));
@@ -70,8 +75,8 @@ export function buildEquipment(scene: Scene): EquipmentRefs {
 
   // Toggle switch
   const toggleMat = new StandardMaterial("toggleMat", scene);
-  toggleMat.diffuseColor = new Color3(1, 0.42, 0.42); // #ff6b6b
-  toggleMat.emissiveColor = new Color3(0.3, 0.1, 0.1);
+  toggleMat.diffuseColor = new Color3(0.8, 0.1, 0.1); // realistic red switch
+  toggleMat.specularColor = new Color3(0.5, 0.5, 0.5);
   const discreteToggle = MeshBuilder.CreateBox("discreteToggle", { width: 0.1, height: 0.04, depth: 0.04 }, scene);
   discreteToggle.position = new Vector3(-1.45, 0.93, -0.301);
   discreteToggle.material = toggleMat;
@@ -87,11 +92,35 @@ export function buildEquipment(scene: Scene): EquipmentRefs {
   bncOut.material = bncOutMat;
 
   // ══════════════════════════════════════
+  // 1b. FUNCTION GENERATOR 2 (Top)
+  // ══════════════════════════════════════
+  const funcGen2Body = MeshBuilder.CreateBox("funcGen2Body", { width: 0.8, height: 0.5, depth: 0.6 }, scene);
+  funcGen2Body.position = new Vector3(-1.2, 1.65, 0);
+  funcGen2Body.material = fgMat;
+
+  const fg2Screen = MeshBuilder.CreatePlane("funcGen2Screen", { width: 0.35, height: 0.12 }, scene);
+  fg2Screen.position = new Vector3(-1.2, 1.80, -0.301);
+  fg2Screen.material = createEmissiveMat(scene, "fg2ScreenMat", new Color3(0.8, 0.9, 0.8));
+
+  const amp2Knob = createKnob(scene, "amp2Knob", new Vector3(-1.4, 1.6, -0.301), knobColor);
+  const freq2Knob = createKnob(scene, "freq2Knob", new Vector3(-1.2, 1.6, -0.301), knobColor);
+  const phase2Knob = createKnob(scene, "phase2Knob", new Vector3(-1.0, 1.6, -0.301), knobColor);
+
+  createSmallLabel(scene, "AMP 2", new Vector3(-1.4, 1.68, -0.31));
+  createSmallLabel(scene, "FREQ 2", new Vector3(-1.2, 1.68, -0.31));
+  createSmallLabel(scene, "PHASE 2", new Vector3(-1.0, 1.68, -0.31));
+
+  const bnc2Out = MeshBuilder.CreateCylinder("bnc2Out", { diameter: 0.05, height: 0.04 }, scene);
+  bnc2Out.position = new Vector3(-0.79, 1.65, 0);
+  bnc2Out.rotation.z = Math.PI / 2;
+  bnc2Out.material = bncOutMat;
+
+  // ══════════════════════════════════════
   // 2. OSCILLOSCOPE
   // ══════════════════════════════════════
   const oscMat = new StandardMaterial("oscMat", scene);
-  oscMat.diffuseColor = new Color3(0.082, 0.082, 0.157); // #151528
-  oscMat.specularColor = new Color3(0.1, 0.1, 0.15);
+  oscMat.diffuseColor = new Color3(0.88, 0.88, 0.88); // realistic light gray
+  oscMat.specularColor = new Color3(0.2, 0.2, 0.2);
 
   const oscBody = MeshBuilder.CreateBox("oscBody", { width: 0.9, height: 0.6, depth: 0.5 }, scene);
   oscBody.position = new Vector3(1.2, 1.15, 0);
@@ -128,9 +157,8 @@ export function buildEquipment(scene: Scene): EquipmentRefs {
   ];
 
   const cableMat = new StandardMaterial("cableMat", scene);
-  cableMat.diffuseColor = new Color3(0, 0.6, 0.55);
-  cableMat.emissiveColor = new Color3(0, 0.36, 0.31); // ~40% of #00e5c8
-  cableMat.specularColor = Color3.Black();
+  cableMat.diffuseColor = new Color3(0.1, 0.1, 0.1); // realistic black cable
+  cableMat.specularColor = new Color3(0.2, 0.2, 0.2);
 
   const bncCable = MeshBuilder.CreateTube("bncCable", {
     path: cablePath,
@@ -139,6 +167,29 @@ export function buildEquipment(scene: Scene): EquipmentRefs {
     sideOrientation: Mesh.DOUBLESIDE,
   }, scene);
   bncCable.material = cableMat;
+
+  // Cable 2 for FG2
+  const cable2Path = [
+    new Vector3(-0.79, 1.65, 0),
+    new Vector3(-0.65, 1.63, 0.15),
+    new Vector3(-0.2, 1.5, 0.25),
+    new Vector3(0.3, 1.4, 0.2),
+    new Vector3(0.6, 1.25, 0.1),
+    new Vector3(0.74, 1.2, -0.05), // Secondary input port location
+  ];
+  
+  const bncIn2 = MeshBuilder.CreateCylinder("bncIn2", { diameter: 0.05, height: 0.04 }, scene);
+  bncIn2.position = new Vector3(0.74, 1.2, -0.05);
+  bncIn2.rotation.z = Math.PI / 2;
+  bncIn2.material = bncOutMat;
+
+  const bncCable2 = MeshBuilder.CreateTube("bncCable2", {
+    path: cable2Path,
+    radius: 0.02,
+    tessellation: 12,
+    sideOrientation: Mesh.DOUBLESIDE,
+  }, scene);
+  bncCable2.material = cableMat;
 
   // ══════════════════════════════════════
   // 4. BREADBOARD
@@ -243,6 +294,10 @@ export function buildEquipment(scene: Scene): EquipmentRefs {
     decayKnob,
     tsKnob,
     discreteToggle,
+    funcGen2Body,
+    amp2Knob,
+    freq2Knob,
+    phase2Knob,
     oscBody,
     oscilloscopeScreen,
     bncCable,
@@ -256,10 +311,10 @@ export function buildEquipment(scene: Scene): EquipmentRefs {
 function createKnob(scene: Scene, name: string, position: Vector3, color: Color3): Mesh {
   const mat = new StandardMaterial(`${name}Mat`, scene);
   mat.diffuseColor = color;
-  mat.emissiveColor = color.scale(0.3);
-  mat.specularColor = new Color3(0.4, 0.4, 0.4);
+  mat.specularColor = new Color3(0.8, 0.8, 0.8);
+  mat.specularPower = 64;
 
-  const knob = MeshBuilder.CreateCylinder(name, { diameter: 0.06, height: 0.04 }, scene);
+  const knob = MeshBuilder.CreateCylinder(name, { diameter: 0.06, height: 0.04, tessellation: 24 }, scene);
   knob.position = position;
   knob.rotation.x = Math.PI / 2;
   knob.material = mat;
@@ -294,7 +349,7 @@ function createSmallLabel(scene: Scene, text: string, position: Vector3): void {
   const ctx = dt.getContext() as unknown as CanvasRenderingContext2D;
   ctx.clearRect(0, 0, 128, 32);
   ctx.font = "bold 20px monospace";
-  ctx.fillStyle = "#a0a0b0";
+  ctx.fillStyle = "#222222"; // dark text for light body
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(text, 64, 16);
@@ -302,7 +357,6 @@ function createSmallLabel(scene: Scene, text: string, position: Vector3): void {
 
   const mat = new StandardMaterial(`lbl_${text}_mat`, scene);
   mat.diffuseTexture = dt;
-  mat.emissiveColor = new Color3(0.4, 0.4, 0.45);
   mat.specularColor = Color3.Black();
   mat.backFaceCulling = false;
   mat.useAlphaFromDiffuseTexture = true;

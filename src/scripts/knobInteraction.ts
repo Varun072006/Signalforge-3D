@@ -19,6 +19,7 @@ interface KnobConfig {
   min: number;
   max: number;
   sensitivity: number; // how much per pixel of mouse movement
+  isSignal2?: boolean;
 }
 
 export function setupKnobInteraction(scene: Scene, equipment: EquipmentRefs, onUpdate: () => void): void {
@@ -28,6 +29,11 @@ export function setupKnobInteraction(scene: Scene, equipment: EquipmentRefs, onU
     { mesh: equipment.phaseKnob, paramKey: 'phi', min: 0, max: 6.28, sensitivity: 0.02 },
     { mesh: equipment.decayKnob, paramKey: 'alpha', min: -3.0, max: 0.5, sensitivity: 0.012 },
     { mesh: equipment.tsKnob, paramKey: 'Ts', min: 0.05, max: 0.5, sensitivity: 0.002 },
+    
+    // FG2 Knobs
+    { mesh: equipment.amp2Knob, paramKey: 'A', min: 0.2, max: 3.0, sensitivity: 0.01, isSignal2: true },
+    { mesh: equipment.freq2Knob, paramKey: 'f', min: 0.1, max: 5.0, sensitivity: 0.015, isSignal2: true },
+    { mesh: equipment.phase2Knob, paramKey: 'phi', min: 0, max: 6.28, sensitivity: 0.02, isSignal2: true },
   ];
 
   let activeKnob: KnobConfig | null = null;
@@ -93,6 +99,12 @@ export function setupKnobInteraction(scene: Scene, equipment: EquipmentRefs, onU
     if (activeKnob.paramKey === 'Ts') {
       newValue = clamp(state.Ts + deltaY * activeKnob.sensitivity, activeKnob.min, activeKnob.max);
       signalState.update({ Ts: newValue });
+    } else if (activeKnob.isSignal2) {
+      const currentVal = (state.signal2Params as unknown as Record<string, number>)[activeKnob.paramKey] ?? 0;
+      newValue = clamp(currentVal + deltaY * activeKnob.sensitivity, activeKnob.min, activeKnob.max);
+      signalState.update({
+        signal2Params: { ...state.signal2Params, [activeKnob.paramKey]: newValue },
+      });
     } else {
       const currentVal = (state.params as unknown as Record<string, number>)[activeKnob.paramKey] ?? 0;
       newValue = clamp(currentVal + deltaY * activeKnob.sensitivity, activeKnob.min, activeKnob.max);
