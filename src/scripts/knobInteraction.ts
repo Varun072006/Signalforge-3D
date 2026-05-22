@@ -1,17 +1,14 @@
-/**
- * SignalForge 3D — Interactive Knob Controller
- * Handles pointer-based knob rotation on the Function Generator.
- * Drag up/down on a knob to change its parameter.
- */
-
 import { Scene } from "@babylonjs/core/scene";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { ActionManager } from "@babylonjs/core/Actions/actionManager";
 import { ExecuteCodeAction } from "@babylonjs/core/Actions/directActions";
-import { signalState } from "./signalState";
+import { Vector3, Quaternion } from "@babylonjs/core/Maths/math.vector";
+import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera";
+import { signalState, SignalState } from "./signalState";
 import { EquipmentRefs } from "./equipmentBuilder";
+import { transitionCameraTo, CameraViewPreset } from "./labEnvironment";
 
 interface KnobConfig {
   mesh: Mesh;
@@ -20,6 +17,94 @@ interface KnobConfig {
   max: number;
   sensitivity: number; // how much per pixel of mouse movement
   isSignal2?: boolean;
+}
+
+export function updateKnobVisuals(equipment: EquipmentRefs, state: SignalState): void {
+  const knobs = [
+    { mesh: equipment.ampKnob, val: state.params.A, min: 0.2, max: 3.0 },
+    { mesh: equipment.freqKnob, val: state.params.f, min: 0.1, max: 5.0 },
+    { mesh: equipment.phaseKnob, val: state.params.phi, min: 0, max: 6.28 },
+    { mesh: equipment.decayKnob, val: state.params.alpha, min: -3.0, max: 0.5 },
+    { mesh: equipment.tsKnob, val: state.Ts, min: 0.05, max: 0.5 },
+    
+    // FG2 Knobs
+    { mesh: equipment.amp2Knob, val: state.signal2Params.A, min: 0.2, max: 3.0 },
+    { mesh: equipment.freq2Knob, val: state.signal2Params.f, min: 0.1, max: 5.0 },
+    { mesh: equipment.phase2Knob, val: state.signal2Params.phi, min: 0, max: 6.28 },
+  ];
+
+  // Pre-build the base quaternion once (rotate cylinder height axis from Y → Z so the
+  // flat circular face points toward the camera at –Z). This is a pure Rx(π/2).
+  const baseQ = Quaternion.RotationAxis(new Vector3(1, 0, 0), Math.PI / 2);
+
+  knobs.forEach(k => {
+    if (k.mesh) {
+      const percent = Math.max(0, Math.min(1, (k.val - k.min) / (k.max - k.min)));
+      // –135 ° (7 o'clock = min) → 0 ° (12 o'clock = mid) → +135 ° (5 o'clock = max)
+      const minAngle = -Math.PI * 0.75;
+      const maxAngle =  Math.PI * 0.75;
+      const dialAngle = minAngle + percent * (maxAngle - minAngle);
+
+      // Rotate around world –Z so positive dialAngle = CLOCKWISE from the camera's view.
+      // (Right-hand rule: thumb at +Z → CCW; so thumb at –Z → CW.)
+      const dialQ = Quaternion.RotationAxis(new Vector3(0, 0, -1), dialAngle);
+
+      // Compose: apply base face-forward first, then spin in world space.
+      // Q = dialQ × baseQ  → baseQ is applied first, dialQ second (world-space).
+      k.mesh.rotationQuaternion = dialQ.multiply(baseQ);
+    }
+  });
+}
+
+function getPresetForMesh(mesh: Mesh, equipment: EquipmentRefs): CameraViewPreset | null {
+  const name = mesh.name;
+  
+  // FG2
+  if (
+    mesh === equipment.amp2Knob ||
+    mesh === equipment.freq2Knob ||
+    mesh === equipment.phase2Knob ||
+    mesh === equipment.funcGen2Body ||
+    name.includes("funcGen2") ||
+    name.includes("amp2Knob") ||
+    name.includes("freq2Knob") ||
+    name.includes("phase2Knob")
+  ) {
+    return 'FG2';
+  }
+
+  // FG1
+  if (
+    mesh === equipment.ampKnob ||
+    mesh === equipment.freqKnob ||
+    mesh === equipment.phaseKnob ||
+    mesh === equipment.decayKnob ||
+    mesh === equipment.tsKnob ||
+    mesh === equipment.discreteToggle ||
+    mesh === equipment.funcGenBody ||
+    name.includes("funcGen") ||
+    name.includes("ampKnob") ||
+    name.includes("freqKnob") ||
+    name.includes("phaseKnob") ||
+    name.includes("decayKnob") ||
+    name.includes("tsKnob") ||
+    name.includes("discreteToggle")
+  ) {
+    return 'FG1';
+  }
+
+  // OSC
+  if (
+    mesh === equipment.oscBody ||
+    mesh === equipment.oscilloscopeScreen ||
+    name.includes("oscBody") ||
+    name.includes("oscilloscopeScreen") ||
+    name.includes("crtScreen")
+  ) {
+    return 'OSC';
+  }
+
+  return null;
 }
 
 export function setupKnobInteraction(scene: Scene, equipment: EquipmentRefs, onUpdate: () => void): void {
@@ -73,7 +158,22 @@ export function setupKnobInteraction(scene: Scene, equipment: EquipmentRefs, onU
   scene.onPointerDown = (evt) => {
     const pickResult = scene.pick(evt.offsetX, evt.offsetY);
     if (pickResult && pickResult.hit && pickResult.pickedMesh) {
-      const picked = pickResult.pickedMesh;
+      const picked = pickResult.pickedMesh as Mesh;
+
+      // Camera Zoom / Focus trigger on click
+      const targetPreset = getPresetForMesh(picked, equipment);
+      if (targetPreset) {
+        const state = signalState.get();
+        if (state.cameraView !== targetPreset) {
+          const activeCamera = scene.activeCamera as ArcRotateCamera;
+          if (activeCamera) {
+            transitionCameraTo(activeCamera, targetPreset, () => {
+              signalState.update({ cameraView: targetPreset });
+            });
+          }
+        }
+      }
+
       const knobConfig = knobs.find(k => k.mesh === picked || k.mesh.name === picked.name);
       if (knobConfig) {
         activeKnob = knobConfig;
@@ -113,8 +213,8 @@ export function setupKnobInteraction(scene: Scene, equipment: EquipmentRefs, onU
       });
     }
 
-    // Rotate knob mesh visually
-    activeKnob.mesh.rotation.y += deltaY * 0.03;
+    // Sync visual rotations instantly during drag
+    updateKnobVisuals(equipment, signalState.get());
 
     onUpdate();
   };
@@ -130,6 +230,39 @@ export function setupKnobInteraction(scene: Scene, equipment: EquipmentRefs, onU
       }
     }
   };
+
+  // Listen for manual camera deviations to clear zoom state back to 'WIDE'
+  const activeCamera = scene.activeCamera as ArcRotateCamera;
+  if (activeCamera) {
+    activeCamera.onViewMatrixChangedObservable.add(() => {
+      const state = signalState.get();
+      if (state.cameraView !== 'WIDE' && !(activeCamera.animations && activeCamera.animations.some(a => a.runtimeAnimations && a.runtimeAnimations.length > 0))) {
+        let presetTarget: Vector3;
+        switch (state.cameraView) {
+          case 'FG1':
+            presetTarget = new Vector3(-1.2, 1.1, -0.15);
+            break;
+          case 'FG2':
+            presetTarget = new Vector3(-1.2, 1.65, -0.15);
+            break;
+          case 'OSC':
+            presetTarget = new Vector3(1.2, 1.15, -0.15);
+            break;
+          default:
+            return;
+        }
+
+        const dist = Vector3.Distance(activeCamera.target, presetTarget);
+        const alphaDiff = Math.abs(activeCamera.alpha - (-Math.PI / 2));
+        const betaDiff = Math.abs(activeCamera.beta - (Math.PI / 2.1));
+
+        // If manually orbited beyond threshold, reset state
+        if (dist > 0.05 || alphaDiff > 0.05 || betaDiff > 0.05) {
+          signalState.update({ cameraView: 'WIDE' });
+        }
+      }
+    });
+  }
 
   // ── Discrete Toggle ──
   const toggle = equipment.discreteToggle;

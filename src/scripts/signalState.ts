@@ -24,6 +24,7 @@ export interface SignalState {
   signal2Params: SignalParams;
   oscPower: boolean;
   cableConnected: boolean;
+  cameraView: 'WIDE' | 'FG1' | 'FG2' | 'OSC';
 }
 
 export type SignalStateListener = (state: SignalState) => void;
@@ -41,6 +42,7 @@ class SignalStateManager {
     signal2Params: { A: 1.0, f: 1.0, phi: 0, alpha: -0.5 },
     oscPower: false,
     cableConnected: false,
+    cameraView: 'WIDE',
   };
 
   private listeners: SignalStateListener[] = [];

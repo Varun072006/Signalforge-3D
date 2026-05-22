@@ -5,7 +5,7 @@
  */
 
 import { Scene } from "@babylonjs/core/scene";
-import { Vector3 } from "@babylonjs/core/Maths/math.vector";
+import { Vector3, Quaternion } from "@babylonjs/core/Maths/math.vector";
 import { Color3 } from "@babylonjs/core/Maths/math.color";
 import { MeshBuilder } from "@babylonjs/core/Meshes/meshBuilder";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
@@ -24,6 +24,7 @@ export interface EquipmentRefs {
   discreteToggle: Mesh;
   // Function Generator 2
   funcGen2Body: Mesh;
+  funcGen2Screen: Mesh;
   amp2Knob: Mesh;
   freq2Knob: Mesh;
   phase2Knob: Mesh;
@@ -295,6 +296,7 @@ export function buildEquipment(scene: Scene): EquipmentRefs {
     tsKnob,
     discreteToggle,
     funcGen2Body,
+    funcGen2Screen: fg2Screen,
     amp2Knob,
     freq2Knob,
     phase2Knob,
@@ -316,13 +318,15 @@ function createKnob(scene: Scene, name: string, position: Vector3, color: Color3
 
   const knob = MeshBuilder.CreateCylinder(name, { diameter: 0.06, height: 0.04, tessellation: 24 }, scene);
   knob.position = position;
-  knob.rotation.x = Math.PI / 2;
+  // Use a quaternion so updateKnobVisuals can safely overwrite it without Euler conflicts.
+  // Rx(π/2) tilts the cylinder so its flat circular face points toward the camera (–Z).
+  knob.rotationQuaternion = Quaternion.RotationAxis(new Vector3(1, 0, 0), Math.PI / 2);
   knob.material = mat;
 
   // Knob indicator line
   const indicator = MeshBuilder.CreateBox(`${name}_indicator`, { width: 0.003, height: 0.045, depth: 0.025 }, scene);
   indicator.parent = knob;
-  indicator.position = new Vector3(0, 0, 0.015);
+  indicator.position = new Vector3(0, 0, -0.015);
   const indMat = new StandardMaterial(`${name}_indMat`, scene);
   indMat.diffuseColor = Color3.White();
   indMat.emissiveColor = Color3.White();

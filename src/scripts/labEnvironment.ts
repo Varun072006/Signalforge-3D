@@ -16,6 +16,8 @@ import { DynamicTexture } from "@babylonjs/core/Materials/Textures/dynamicTextur
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { Mesh } from "@babylonjs/core/Meshes/mesh";
 import { GridMaterial } from "@babylonjs/materials/grid/gridMaterial";
+import { Animation } from "@babylonjs/core/Animations/animation";
+import { ExponentialEase, EasingFunction } from "@babylonjs/core/Animations/easing";
 
 export interface LabEnvironmentRefs {
   floor: Mesh;
@@ -288,4 +290,108 @@ function createWhiteboard(scene: Scene, position: Vector3): void {
   mat.emissiveColor = new Color3(0.6, 0.6, 0.6); // Boost brightness
   mat.specularColor = new Color3(0.5, 0.5, 0.5); // somewhat glossy
   board.material = mat;
+}
+
+export type CameraViewPreset = 'WIDE' | 'FG1' | 'FG2' | 'OSC';
+
+export function transitionCameraTo(
+  camera: ArcRotateCamera,
+  preset: CameraViewPreset,
+  onComplete?: () => void
+): void {
+  const scene = camera.getScene();
+  
+  // Detach control temporarily to prevent input fight
+  const canvas = scene.getEngine().getRenderingCanvas();
+  if (canvas) {
+    camera.detachControl();
+  }
+
+  let targetVal: Vector3;
+  let alphaVal: number;
+  let betaVal: number;
+  let radiusVal: number;
+
+  switch (preset) {
+    case 'FG1':
+      targetVal = new Vector3(-1.2, 1.1, -0.15);
+      alphaVal = -Math.PI / 2;
+      betaVal = Math.PI / 2.1;
+      radiusVal = 1.8;
+      break;
+    case 'FG2':
+      targetVal = new Vector3(-1.2, 1.65, -0.15);
+      alphaVal = -Math.PI / 2;
+      betaVal = Math.PI / 2.1;
+      radiusVal = 1.8;
+      break;
+    case 'OSC':
+      targetVal = new Vector3(1.2, 1.15, -0.15);
+      alphaVal = -Math.PI / 2;
+      betaVal = Math.PI / 2.1;
+      radiusVal = 1.9;
+      break;
+    case 'WIDE':
+    default:
+      targetVal = new Vector3(0, 0.85, 0);
+      alphaVal = -Math.PI / 2;
+      betaVal = Math.PI / 2.5;
+      radiusVal = 7;
+      break;
+  }
+
+  // Ensure alpha is kept close to -Math.PI / 2 to avoid winding spins
+  const alphaValNormalized = alphaVal;
+  const diff = camera.alpha - alphaValNormalized;
+  const normalizedDiff = Math.atan2(Math.sin(diff), Math.cos(diff));
+  camera.alpha = alphaValNormalized + normalizedDiff;
+
+  const fps = 60;
+  const duration = 0.45; // 450ms
+  const totalFrames = fps * duration;
+
+  // We animate target, alpha, beta, radius
+  const animTarget = new Animation("camTarget", "target", fps, Animation.ANIMATIONTYPE_VECTOR3, Animation.ANIMATIONLOOPMODE_CONSTANT);
+  animTarget.setKeys([
+    { frame: 0, value: camera.target.clone() },
+    { frame: totalFrames, value: targetVal }
+  ]);
+
+  const animAlpha = new Animation("camAlpha", "alpha", fps, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CONSTANT);
+  animAlpha.setKeys([
+    { frame: 0, value: camera.alpha },
+    { frame: totalFrames, value: alphaVal }
+  ]);
+
+  const animBeta = new Animation("camBeta", "beta", fps, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CONSTANT);
+  animBeta.setKeys([
+    { frame: 0, value: camera.beta },
+    { frame: totalFrames, value: betaVal }
+  ]);
+
+  const animRadius = new Animation("camRadius", "radius", fps, Animation.ANIMATIONTYPE_FLOAT, Animation.ANIMATIONLOOPMODE_CONSTANT);
+  animRadius.setKeys([
+    { frame: 0, value: camera.radius },
+    { frame: totalFrames, value: radiusVal }
+  ]);
+
+  // Easing function
+  const ease = new ExponentialEase();
+  ease.setEasingMode(EasingFunction.EASINGMODE_EASEINOUT);
+  animTarget.setEasingFunction(ease);
+  animAlpha.setEasingFunction(ease);
+  animBeta.setEasingFunction(ease);
+  animRadius.setEasingFunction(ease);
+
+  camera.animations = [animTarget, animAlpha, animBeta, animRadius];
+
+  scene.beginAnimation(camera, 0, totalFrames, false, 1.0, () => {
+    // Re-attach control when done
+    if (canvas) {
+      camera.attachControl(canvas, true);
+    }
+    if (onComplete) {
+      onComplete();
+    }
+  });
 }

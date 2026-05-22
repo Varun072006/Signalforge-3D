@@ -21,21 +21,23 @@ import "@babylonjs/core/Rendering/prePassRendererSceneComponent";
 import "@babylonjs/core/Materials/Textures/Loaders/envTextureLoader";
 
 // SignalForge modules
-import { buildLabEnvironment } from "@/scripts/labEnvironment";
+import { buildLabEnvironment, transitionCameraTo } from "@/scripts/labEnvironment";
 import { buildEquipment } from "@/scripts/equipmentBuilder";
 import { HolographicWaveRenderer } from "@/scripts/holographicWave";
 import { buildSignalHub } from "@/scripts/signalHubPanel";
-import { setupKnobInteraction } from "@/scripts/knobInteraction";
+import { setupKnobInteraction, updateKnobVisuals } from "@/scripts/knobInteraction";
 import { OscilloscopeDisplay } from "@/scripts/oscilloscopeScreen";
 import { InfoPanelDisplay } from "@/scripts/infoPanelDisplay";
 import { ChallengeMode } from "@/scripts/challengeMode";
 import { runOnboardingTour } from "@/scripts/onboardingTour";
 import { signalState } from "@/scripts/signalState";
+import { FuncGenDisplay } from "@/scripts/funcGenScreen";
 
 import { CreatorEngineLoadingScreen } from "@/creatorengine-loading-screen";
 
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const sceneRef = useRef<Scene | null>(null);
   const [appState, setAppState] = useState(signalState.get());
 
   useEffect(() => {
@@ -63,6 +65,7 @@ export default function Home() {
     engine.loadingScreen = new CreatorEngineLoadingScreen();
 
     const scene = new Scene(engine);
+    sceneRef.current = scene;
 
     initSignalForgeLab(engine, scene);
 
@@ -98,6 +101,8 @@ export default function Home() {
     const oscDisplay = new OscilloscopeDisplay(scene, equipment.oscilloscopeScreen);
     const infoPanel = new InfoPanelDisplay(scene);
     const challenge = new ChallengeMode(scene, equipment, labRefs);
+    const fg1Display = new FuncGenDisplay(scene, equipment.funcGenScreen, false);
+    const fg2Display = new FuncGenDisplay(scene, equipment.funcGen2Screen, true);
 
     // ═══════════════════════════════════════════════
     // MASTER UPDATE — called on every state change
@@ -122,6 +127,9 @@ export default function Home() {
       oscDisplay.update(state, overlayType);
       infoPanel.update(state);
       challenge.update(state);
+      updateKnobVisuals(equipment, state);
+      fg1Display.update(state, false);
+      fg2Display.update(state, true);
     }
 
     // ═══════════════════════════════════════════════
@@ -140,21 +148,15 @@ export default function Home() {
 
       switch (kbInfo.event.key.toLowerCase()) {
         case 'f':
-          // Focus on oscilloscope screen
-          camera.setTarget(new Vector3(1.2, 1.22, 0));
-          camera.radius = 2.5;
+          transitionCameraTo(camera, 'OSC', () => {
+            signalState.update({ cameraView: 'OSC' });
+          });
           break;
         case 'g':
-          // Focus on holographic wave
-          camera.setTarget(new Vector3(0, 2.0, 0));
-          camera.radius = 4;
-          break;
         case 'r':
-          // Reset camera
-          camera.setTarget(new Vector3(0, 0.85, 0));
-          camera.radius = 6;
-          camera.alpha = -Math.PI / 2;
-          camera.beta = Math.PI / 3;
+          transitionCameraTo(camera, 'WIDE', () => {
+            signalState.update({ cameraView: 'WIDE' });
+          });
           break;
       }
     });
@@ -199,6 +201,14 @@ export default function Home() {
   // Handle UI changes
   const handleTaskChange = (task: string) => {
     signalState.update({ activeTask: task });
+  };
+  
+  const handleExitZoom = () => {
+    if (sceneRef.current && sceneRef.current.activeCamera) {
+      transitionCameraTo(sceneRef.current.activeCamera as ArcRotateCamera, 'WIDE', () => {
+        signalState.update({ cameraView: 'WIDE' });
+      });
+    }
   };
   
   const handleTypeChange = (type: string) => {
@@ -386,10 +396,20 @@ export default function Home() {
           </div>
         </aside>
 
-        {/* Floating Instructions/Status */}
-        <div className="pointer-events-auto absolute bottom-8 left-1/2 -translate-x-1/2 px-8 py-3 rounded-full bg-white/95 backdrop-blur-md border border-gray-200 shadow-lg text-gray-600 text-sm font-medium">
-          Drag the 3D lab environment to rotate. Press <kbd className="bg-gray-100 border border-gray-300 shadow-sm px-2 py-1 rounded text-red-600 font-bold font-mono mx-1">F</kbd> to focus Oscilloscope.
-        </div>
+        {/* Floating Instructions/Status or Exit Zoom button */}
+        {appState.cameraView !== 'WIDE' ? (
+          <button 
+            onClick={handleExitZoom}
+            className="pointer-events-auto absolute bottom-8 left-1/2 -translate-x-1/2 px-8 py-4 rounded-full bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-bold text-sm tracking-wide shadow-[0_10px_25px_rgba(239,68,68,0.45)] hover:shadow-[0_15px_30px_rgba(239,68,68,0.6)] hover:-translate-y-0.5 active:translate-y-0 active:shadow-md transition-all duration-300 ease-out flex items-center space-x-2"
+          >
+            <span>🔍</span>
+            <span>EXIT ZOOM / VIEW 3D GRAPH</span>
+          </button>
+        ) : (
+          <div className="pointer-events-auto absolute bottom-8 left-1/2 -translate-x-1/2 px-8 py-3 rounded-full bg-white/95 backdrop-blur-md border border-gray-200 shadow-lg text-gray-600 text-sm font-medium">
+            Drag the 3D lab environment to rotate. Click equipment to focus, or press <kbd className="bg-gray-100 border border-gray-300 shadow-sm px-2 py-1 rounded text-red-600 font-bold font-mono mx-1">F</kbd> to focus Oscilloscope.
+          </div>
+        )}
       </div>
     </main>
   );
