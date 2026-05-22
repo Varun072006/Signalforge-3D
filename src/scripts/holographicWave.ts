@@ -22,8 +22,8 @@ const T_RANGE = T_MAX - T_MIN;
 const X_MIN = -2.5;
 const X_MAX = 2.5;
 const X_RANGE = X_MAX - X_MIN;
-const Y_BASE = 2.0;       // Hologram floats at y=2.0
-const Y_SCALE = 0.4;      // Amplitude scaling
+const Y_BASE = 3.5;       // Hologram floats high above the table & equipment
+const Y_SCALE = 0.5;      // Amplitude scaling (slightly bigger now it has room)
 const SAMPLE_STEP = 0.04; // ~325 points
 
 /** Maps t to x position */
@@ -228,13 +228,13 @@ export class HolographicWaveRenderer {
 
       // Tick mark
       const tick = MeshBuilder.CreateBox(`tick_${t}`, { width: 0.02, height: 0.1, depth: 0.01 }, this.scene);
-      tick.position = new Vector3(x, 1.7, 0);
+      tick.position = new Vector3(x, 3.2, 0);
       tick.material = tickMat;
       this.tickMeshes.push(tick);
 
       // Tick label
       const labelPlane = MeshBuilder.CreatePlane(`tickLabel_${t}`, { width: 0.12, height: 0.06 }, this.scene);
-      labelPlane.position = new Vector3(x, 1.6, 0);
+      labelPlane.position = new Vector3(x, 3.1, 0);
       labelPlane.billboardMode = Mesh.BILLBOARDMODE_ALL;
 
       const dt = new DynamicTexture(`dt_tick_${t}`, { width: 64, height: 32 }, this.scene, false);
@@ -270,7 +270,7 @@ export class HolographicWaveRenderer {
 
     const originX = tToX(0);
     const line = MeshBuilder.CreateBox("originMarker", { width: 0.01, height: 0.6, depth: 0.01 }, this.scene);
-    line.position = new Vector3(originX, 2.0, 0);
+    line.position = new Vector3(originX, 3.5, 0);
     line.material = mat;
     this.originLine = line;
   }

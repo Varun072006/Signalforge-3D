@@ -155,8 +155,8 @@ export function buildLabEnvironment(scene: Scene): LabEnvironmentRefs {
   spot1.diffuse = new Color3(1.0, 0.9, 0.9);
 
   // ── Axis Labels ──
-  createAxisLabel(scene, "Z — TIME (t)", new Vector3(0, 1.45, 0.5), 0);
-  createAxisLabel(scene, "Y — AMPLITUDE x(t)", new Vector3(-3.2, 2.8, 0), Math.PI / 2);
+  createAxisLabel(scene, "Z — TIME (t)", new Vector3(0, 3.05, 0.5), 0);
+  createAxisLabel(scene, "Y — AMPLITUDE x(t)", new Vector3(-3.2, 4.5, 0), Math.PI / 2);
 
   return { floor, table: tableTop, camera };
 }
@@ -314,22 +314,25 @@ export function transitionCameraTo(
 
   switch (preset) {
     case 'FG1':
-      targetVal = new Vector3(-1.2, 1.1, -0.15);
-      alphaVal = -Math.PI / 2;
-      betaVal = Math.PI / 2.1;
-      radiusVal = 1.8;
+      // Zoom tightly on FG1 — close enough to read every digit on the LCD
+      targetVal = new Vector3(-1.2, 1.15, -0.3);
+      alphaVal = -Math.PI / 2;     // dead-centre on the front face
+      betaVal  =  Math.PI / 2.05;  // nearly level / very slight downward tilt
+      radiusVal = 0.85;
       break;
     case 'FG2':
-      targetVal = new Vector3(-1.2, 1.65, -0.15);
+      // Same tight zoom for the top generator
+      targetVal = new Vector3(-1.2, 1.75, -0.3);
       alphaVal = -Math.PI / 2;
-      betaVal = Math.PI / 2.1;
-      radiusVal = 1.8;
+      betaVal  =  Math.PI / 2.05;
+      radiusVal = 0.85;
       break;
     case 'OSC':
-      targetVal = new Vector3(1.2, 1.15, -0.15);
+      // Slightly wider for the oscilloscope (bigger screen)
+      targetVal = new Vector3(1.2, 1.2, -0.25);
       alphaVal = -Math.PI / 2;
-      betaVal = Math.PI / 2.1;
-      radiusVal = 1.9;
+      betaVal  =  Math.PI / 2.1;
+      radiusVal = 1.1;
       break;
     case 'WIDE':
     default:
