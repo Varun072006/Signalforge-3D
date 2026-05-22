@@ -155,8 +155,8 @@ export function buildLabEnvironment(scene: Scene): LabEnvironmentRefs {
   spot1.diffuse = new Color3(1.0, 0.9, 0.9);
 
   // ── Axis Labels ──
-  createAxisLabel(scene, "Z — TIME (t)", new Vector3(0, 3.05, 0.5), 0);
-  createAxisLabel(scene, "Y — AMPLITUDE x(t)", new Vector3(-3.2, 4.5, 0), Math.PI / 2);
+  createAxisLabel(scene, "Z — TIME (t)", new Vector3(0, 1.45, 4.0), 0);
+  createAxisLabel(scene, "Y — AMPLITUDE x(t)", new Vector3(-3.2, 2.8, 3.5), Math.PI / 2);
 
   return { floor, table: tableTop, camera };
 }

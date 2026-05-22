@@ -22,9 +22,10 @@ const T_RANGE = T_MAX - T_MIN;
 const X_MIN = -2.5;
 const X_MAX = 2.5;
 const X_RANGE = X_MAX - X_MIN;
-const Y_BASE = 3.5;       // Hologram floats high above the table & equipment
-const Y_SCALE = 0.5;      // Amplitude scaling (slightly bigger now it has room)
-const SAMPLE_STEP = 0.04; // ~325 points
+const Y_BASE = 2.0;        // Hologram floats at y=2.0 (original height)
+const Y_SCALE = 0.4;       // Amplitude scaling
+const Z_WAVE_OFFSET = 3.5; // Shift entire wave backward (away from equipment)
+const SAMPLE_STEP = 0.04;  // ~325 points
 
 /** Maps t to x position */
 function tToX(t: number): number {
@@ -84,7 +85,7 @@ export class HolographicWaveRenderer {
     for (let t = T_MIN; t <= T_MAX; t += step) {
       const v = t >= 0 ? 1.0 * Math.exp(-1.5 * t) : 0;
       const clamped = clampSignal(v, -3, 3);
-      points.push(new Vector3(tToX(t), clamped * Y_SCALE + Y_BASE, 0.2));
+      points.push(new Vector3(tToX(t), clamped * Y_SCALE + Y_BASE, Z_WAVE_OFFSET + 0.2));
       colors.push(shadowColor);
     }
 
@@ -123,7 +124,7 @@ export class HolographicWaveRenderer {
     for (let t = T_MIN; t <= T_MAX; t += step) {
       const v = computeSignal(overlayType, t, overlayParams);
       const clamped = clampSignal(v, -3, 3);
-      points.push(new Vector3(tToX(t), clamped * Y_SCALE + Y_BASE, -0.3));
+      points.push(new Vector3(tToX(t), clamped * Y_SCALE + Y_BASE, Z_WAVE_OFFSET - 0.3));
       colors.push(overlayColor);
     }
 
@@ -148,7 +149,7 @@ export class HolographicWaveRenderer {
     for (let t = T_MIN; t <= T_MAX; t += step) {
       const v = computeSignal(state.type, t, state.params);
       const clamped = clampSignal(v, -3, 3);
-      points.push(new Vector3(tToX(t), clamped * Y_SCALE + Y_BASE, 0));
+      points.push(new Vector3(tToX(t), clamped * Y_SCALE + Y_BASE, Z_WAVE_OFFSET));
       colors.push(waveColor);
     }
 
@@ -201,14 +202,14 @@ export class HolographicWaveRenderer {
           diameter: 0.015,
           height: height,
         }, this.scene);
-        stem.position = new Vector3(x, (yTop + yBot) / 2, 0);
+        stem.position = new Vector3(x, (yTop + yBot) / 2, Z_WAVE_OFFSET);
         stem.material = stemMat;
         this.stemMeshes.push(stem);
       }
 
       // Tip sphere
       const tip = MeshBuilder.CreateSphere(`tip_${n}`, { diameter: 0.04 }, this.scene);
-      tip.position = new Vector3(x, yTop, 0);
+      tip.position = new Vector3(x, yTop, Z_WAVE_OFFSET);
       tip.material = tipMat;
       this.stemMeshes.push(tip);
     }
@@ -228,13 +229,13 @@ export class HolographicWaveRenderer {
 
       // Tick mark
       const tick = MeshBuilder.CreateBox(`tick_${t}`, { width: 0.02, height: 0.1, depth: 0.01 }, this.scene);
-      tick.position = new Vector3(x, 3.2, 0);
+      tick.position = new Vector3(x, 1.7, Z_WAVE_OFFSET);
       tick.material = tickMat;
       this.tickMeshes.push(tick);
 
       // Tick label
       const labelPlane = MeshBuilder.CreatePlane(`tickLabel_${t}`, { width: 0.12, height: 0.06 }, this.scene);
-      labelPlane.position = new Vector3(x, 3.1, 0);
+      labelPlane.position = new Vector3(x, 1.6, Z_WAVE_OFFSET);
       labelPlane.billboardMode = Mesh.BILLBOARDMODE_ALL;
 
       const dt = new DynamicTexture(`dt_tick_${t}`, { width: 64, height: 32 }, this.scene, false);
@@ -270,7 +271,7 @@ export class HolographicWaveRenderer {
 
     const originX = tToX(0);
     const line = MeshBuilder.CreateBox("originMarker", { width: 0.01, height: 0.6, depth: 0.01 }, this.scene);
-    line.position = new Vector3(originX, 3.5, 0);
+    line.position = new Vector3(originX, 2.0, Z_WAVE_OFFSET);
     line.material = mat;
     this.originLine = line;
   }
